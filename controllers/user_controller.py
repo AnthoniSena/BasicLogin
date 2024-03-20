@@ -72,6 +72,23 @@ class UserController:
         else:
             token = authentication_token.create_access_token(user=user)
         return token
+    
+    def change_password(self, user_id: int, new_password: str):
+        session = self.SessionLocal()
+        encrypted_password = pwd_context.hash(new_password)
+        user = session.query(User).filter_by(id=user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+        user.password = encrypted_password
+        try:
+            session.commit()
+            return {"message": "Senha Alterada"}
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(status_code=400, detail="Erro ao alterar senha.") from e
+        finally:
+            session.close()
 
+    
     def validate_token(self, token):
         pass

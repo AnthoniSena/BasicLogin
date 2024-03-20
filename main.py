@@ -7,7 +7,7 @@ from db.session import Session
 import os
 from fastapi import HTTPException
 from controllers.user_controller import UserController
-from schema.schemas import UserInput, LoginData
+from schema import schemas 
 
 SessionLocal = Session
 
@@ -29,7 +29,7 @@ def start_application():
 app = start_application()
 
 @app.post("/Cadastrar")
-def Cadastra_usuario(usuario_input: UserInput):
+def Cadastra_usuario(usuario_input: schemas.UserInput):
     name = usuario_input.name
     email = usuario_input.email
     password = usuario_input.password
@@ -43,12 +43,24 @@ def pega_usuario(id_usuario: int):
     return user
 
 @app.post("/login", response_model=dict)
-async def login_access_token(form_data: LoginData):
+async def login_access_token(form_data: schemas.LoginData):
     user = user_controller.get_user(email=form_data.email)
     if not user:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
     access_token = user_controller.create_authentication_token(email=form_data.email, password=form_data.password)
     return {"token": access_token.access_token, "token_type": "bearer"}
+
+@app.post('/change-password')
+def change_password(form_data: schemas.changepassword):
+    user = user_controller.get_user(email=form_data.email)
+    new_password = form_data.new_password
+    if not user:
+        raise HTTPException(status_code=400, detail="Usuario não encontrado")
+    
+    if not user_controller.verify_password(form_data.old_password, user.password):
+        raise HTTPException(status_code=400, detail="Senha invalida")
+
+    return user_controller.change_password(user.id, new_password)
 
 import uvicorn
 if __name__ == "__main__":

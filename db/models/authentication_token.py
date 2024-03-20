@@ -13,6 +13,7 @@ class AuthenticationToken(Base):
     expiration_date = Column(DateTime, default=datetime.now(timezone.utc) + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)), nullable=False)
     status = Column(Enum('A', 'C', name='user_status'), default='A', nullable=False)
     user_id = Column(Integer, ForeignKey("user.id"))
-    access_token = Column(String)
+    access_token = Column(String, primary_key=True)
+    refresh_toke = Column(String,nullable=False)
 
     user = relationship("User", back_populates="tokens")
