@@ -1,4 +1,4 @@
-from core.config import settings
+from config.config import settings
 from fastapi import FastAPI, Depends
 from db.session import engine 
 from db.models.user import User
@@ -8,14 +8,11 @@ import os
 from fastapi import HTTPException
 from controllers.user_controller import UserController
 from schema import schemas 
+from auth.auth_bearer import JWTBearer
 
 SessionLocal = Session
 
 user_controller = UserController(SessionLocal)
-
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-ALGORITHM = os.getenv("JWT_ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
 
 def create_tables():
     User.metadata.create_all(bind=engine)
@@ -36,19 +33,19 @@ def Cadastra_usuario(usuario_input: schemas.UserInput):
     return user_controller.create_user(name, email, password)
 
 @app.get("/Usuario/{id_usuario}")
-def pega_usuario(id_usuario: int):
+def pega_usuario(id_usuario: int, dependencies=Depends(JWTBearer())):
     user = user_controller.get_user_by_id(id_usuario)
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return user
 
 @app.post("/login", response_model=dict)
-async def login_access_token(form_data: schemas.LoginData):
+async def login(form_data: schemas.LoginData):
     user = user_controller.get_user(email=form_data.email)
     if not user:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
     access_token = user_controller.create_authentication_token(email=form_data.email, password=form_data.password)
-    return {"token": access_token.access_token, "token_type": "bearer"}
+    return {"access_token": access_token.access_token, "token_type": "bearer"}
 
 @app.post('/change-password')
 def change_password(form_data: schemas.changepassword):
@@ -61,6 +58,10 @@ def change_password(form_data: schemas.changepassword):
         raise HTTPException(status_code=400, detail="Senha invalida")
 
     return user_controller.change_password(user.id, new_password)
+
+@app.post('/logout')
+def logout():
+    pass
 
 import uvicorn
 if __name__ == "__main__":
