@@ -1,14 +1,14 @@
 from config.config import settings
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Header, Request
 from db.session import engine 
 from db.models.user import User
 from db.models.authentication_token import AuthenticationToken
 from db.session import Session
-import os
+from auth.auth_bearer import token_required
 from fastapi import HTTPException
 from controllers.user_controller import UserController
 from schema import schemas 
-from auth.auth_bearer import JWTBearer
+from typing import Annotated
 
 SessionLocal = Session
 
@@ -26,14 +26,25 @@ def start_application():
 app = start_application()
 
 @app.post("/Cadastrar")
-def Cadastra_usuario(usuario_input: schemas.UserInput):
+def Cadastra_usuario(request: Request,usuario_input: schemas.UserInput):
     name = usuario_input.name
     email = usuario_input.email
     password = usuario_input.password
     return user_controller.create_user(name, email, password)
 
 @app.get("/Usuario/{id_usuario}")
-def pega_usuario(id_usuario: int, dependencies=Depends(JWTBearer())):
+@token_required
+async def pega_usuario(request: Request,id_usuario: int):
+    # Aqui você pode usar o token JWT para realizar a autenticação e autorização
+    user = user_controller.get_user_by_id(id_usuario)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    return user
+
+@app.get("/items/{id_usuario}")
+@token_required
+async def pegar_usuario(request: Request,id_usuario: int):
+    # Aqui você pode usar o token JWT para realizar a autenticação e autorização
     user = user_controller.get_user_by_id(id_usuario)
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
