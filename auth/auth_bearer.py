@@ -33,7 +33,6 @@ def token_required(func: Callable):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token de autenticação não fornecido.")
         token = bearer_token.split(" ")[1]
         decoded_token = decode_access_token(token)
-        print(authentication_token.validate_token(decoded_token))
         if decoded_token == None or not authentication_token.validate_token(decoded_token):
              raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token de autenticação inválido")
         
