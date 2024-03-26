@@ -7,7 +7,6 @@ import os
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
 class UserController:
     def __init__(self, SessionLocal) -> None:
         self.SessionLocal = SessionLocal
@@ -34,10 +33,13 @@ class UserController:
         except Exception as e:
             session.rollback()
             raise HTTPException(status_code=400, detail="Erro ao criar usuário.") from e
+        finally:
+            session.close()
         
     def exist_user(self, email:str):
         session = self.SessionLocal()
         user = session.query(User).filter(User.email == email).first()
+        session.close()
         if user:
             return True
         return False
@@ -45,6 +47,7 @@ class UserController:
     def get_user(self, email: str):
         session = self.SessionLocal()
         user = session.query(User).filter(User.email == email).first()
+        session.close()
         if user.status != 'A':
             raise HTTPException(status_code=400, detail="Usuário cancelado.")
         elif user:
@@ -84,7 +87,3 @@ class UserController:
             raise HTTPException(status_code=400, detail="Erro ao alterar senha.") from e
         finally:
             session.close()
-
-    
-    def validate_token(self, token):
-        pass

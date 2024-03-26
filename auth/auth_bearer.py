@@ -4,22 +4,20 @@ from functools import wraps
 from db.models import authentication_token
 from db.session import Session
 from jwt.exceptions import InvalidTokenError
-from fastapi import FastAPI, Depends, HTTPException,status, Header
+from fastapi import HTTPException,status, Header
 from fastapi import Request, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Callable
+from db.session import Session
 from fastapi.requests import Request
+from controllers.authentication_token_controller import AuthenticationTokenController
 
-ACCESS_TOKEN_EXPIRE_MINUTES=os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
-REFRESH_TOKEN_EXPIRE_MINUTES= os.getenv("JWT_REFRESH_TOKEN_EXPIRE_MINUTES")
 ALGORITHM=os.getenv("JWT_ALGORITHM")
-JWT_ACCESS_TOKEN_SECRET_KEY=os.getenv("JWT_ACCESS_TOKEN_SECRET_KEY")
-JWT_REFRESH_TOKEN_SECRET_KEY =os.getenv("JWT_REFRESH_SECRET_KEY")
+HTTP_ACCESS_TOKEN_SECRET_KEY=os.getenv("HTTP_ACCESS_TOKEN_SECRET_KEY")
 
-def decodeJWT(token: str):
+def decode_access_token(token: str):
     try:
-        verified_token = jwt.decode(token, JWT_ACCESS_TOKEN_SECRET_KEY, ALGORITHM)
-        return verified_token
+        decoded_acces_token = jwt.decode(token, HTTP_ACCESS_TOKEN_SECRET_KEY, ALGORITHM)
+        return decoded_acces_token
     except InvalidTokenError:
         return None
 
@@ -29,10 +27,15 @@ def encodeJWT(token: str):
 def token_required(func: Callable):
     @wraps(func)
     async def wrapper(request, *args, **kwargs):
-        token = request.headers.get("Authorization")
-        if not token:
-            raise HTTPException(status_code=403, detail="Token de autenticação não fornecido.")
-        
+        authentication_token = AuthenticationTokenController(SessionLocal=Session)
+        bearer_token = request.headers.get("Authorization")
+        if not bearer_token:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token de autenticação não fornecido.")
+        token = bearer_token.split(" ")[1]
+        decoded_token = decode_access_token(token)
+        print(authentication_token.validate_token(decoded_token))
+        if decoded_token == None or not authentication_token.validate_token(decoded_token):
+             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token de autenticação inválido")
         
         return await func(request,*args, **kwargs)
         
