@@ -1,8 +1,7 @@
 from db.models.user import User
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from db.models.authentication_token import AuthenticationToken
 from datetime import datetime, timezone, timedelta
-from passlib.context import CryptContext
 import jwt
 import os
 
@@ -18,7 +17,7 @@ class AuthenticationTokenController:
     def validate_token(self, token: str):
         session = self.SessionLocal()
         exist_token = session.query(AuthenticationToken).filter(
-            AuthenticationToken.access_token==token["token"],
+            AuthenticationToken.access_token==token,
             AuthenticationToken.status=="A",
             AuthenticationToken.expiration_date > datetime.now(timezone.utc)).first()
         session.close()
@@ -26,7 +25,7 @@ class AuthenticationTokenController:
             return True
         return False
         
-    def exist_valid_token(self, user:User):
+    def exist_valid_token_user(self, user:User):
         session = self.SessionLocal()
         exist_token = session.query(AuthenticationToken).filter(
             AuthenticationToken.user_id==user.id,
@@ -38,13 +37,24 @@ class AuthenticationTokenController:
             return exist_token
         else:
             return False
-    
 
-    def create_access_token(self, user: User):
+    def exist_valid_token(self, token:str):
         session = self.SessionLocal()
-        authentication_token = AuthenticationTokenController(self.SessionLocal)
+        exist_token = session.query(AuthenticationToken).filter(
+            AuthenticationToken.access_token==token,
+            AuthenticationToken.status=="A",
+            AuthenticationToken.expiration_date > datetime.now(timezone.utc)
+            ).first()
+        session.close()
+        if exist_token:
+            return exist_token
+        else:
+            return False
+
+    async def create_access_token(self, user: User):
+        session = self.SessionLocal()
         
-        existing_token = authentication_token.exist_valid_token(user=user)
+        existing_token = self.exist_valid_token_user(user=user)
         if existing_token:
             return existing_token
         
@@ -64,6 +74,26 @@ class AuthenticationTokenController:
             return secured_acces_token
         except Exception as e:
             session.rollback()
-            raise HTTPException(status_code=400, detail="Erro ao criar token de acesso.") from e
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro ao criar token de acesso.") from e
+        finally:
+            session.close()
+
+    async def cancel_access_token(self, token: str):
+        session = self.SessionLocal()
+        if not self.validate_token(token):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Token não encontrado.")
+
+        existing_token = session.query(AuthenticationToken).filter(
+            AuthenticationToken.access_token==token,
+            AuthenticationToken.status=="A",
+            AuthenticationToken.expiration_date > datetime.now(timezone.utc)
+            ).first()
+        existing_token.status="C"
+        try:
+            session.commit()
+            return {"message": "Logout efetuado com sucesso."}
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Erro ao alterar senha.") from e
         finally:
             session.close()

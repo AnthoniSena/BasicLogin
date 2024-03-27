@@ -1,4 +1,4 @@
-from schema import schemas
+from schemas import schemas
 from fastapi import APIRouter, Request, HTTPException
 from controllers.user_controller import UserController
 from db.session import Session
@@ -25,6 +25,7 @@ async def pega_usuario(request: Request,id_usuario: int):
     return user
 
 @router.post('/change-password')
+@token_required
 def change_password(form_data: schemas.changepassword):
     user = user_controller.get_user(email=form_data.email)
     new_password = form_data.new_password
