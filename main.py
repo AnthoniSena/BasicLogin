@@ -4,12 +4,9 @@ from db.session import engine
 from db.models.user import User
 from db.models.authentication_token import AuthenticationToken
 from db.session import Session
-from controllers.user_controller import UserController
-from routes import user_routes, auth_routes
+from controllers import user_auth_controller, user_controller
 
 SessionLocal = Session
-
-user_controller = UserController(SessionLocal)
 
 def create_tables():
     User.metadata.create_all(bind=engine)
@@ -22,8 +19,8 @@ def start_application():
 
 app = start_application()
 
-app.include_router(user_routes.router)
-app.include_router(auth_routes.router)
+app.include_router(user_auth_controller.router)
+app.include_router(user_controller.router)
 
 import uvicorn
 if __name__ == "__main__":

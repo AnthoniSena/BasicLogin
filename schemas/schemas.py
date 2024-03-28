@@ -10,6 +10,6 @@ class UserInput(BaseModel):
     password: str
 
 class changepassword(BaseModel):
-    email:str
+    user_id:str
     old_password:str
     new_password:str

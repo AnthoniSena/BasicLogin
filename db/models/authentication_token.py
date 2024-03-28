@@ -14,6 +14,5 @@ class AuthenticationToken(Base):
     status = Column(Enum('A', 'C', name='token_status'), default='A', nullable=False)
     user_id = Column(Integer, ForeignKey("user.id"))
     access_token = Column(String, index=True)
-    refresh_token = Column(String,nullable=False)
 
     user = relationship("User", back_populates="tokens")
