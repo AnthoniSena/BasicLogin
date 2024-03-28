@@ -2,7 +2,7 @@ from schemas import schemas
 from fastapi import APIRouter, Request
 from services.user_auth_service import UserAuthService
 from db.session import Session
-from auth.auth_bearer import token_required
+from auth.auth_bearer import token_required, specific_user_token_required
 
 SessionLocal = Session
 router = APIRouter()
@@ -19,5 +19,6 @@ def logout(request: Request):
 
 @router.post('/ChangePassword')
 @token_required
+@specific_user_token_required
 async def change_password(request: Request, form_data: schemas.changepassword):
     return await user_auth_services.change_password(form_data)
