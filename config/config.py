@@ -9,11 +9,14 @@ class Settings:
     PROJECT_NAME:str = "Project Name"
     PROJECT_VERSION: str = "1.0.0"
 
-    DATABASE_USER : str = os.getenv("DATABASE_USER")
-    DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
-    DATABASE_SERVER : str = os.getenv("DATABASE_SERVER")
-    DATABASE_PORT : str = os.getenv("DATABASE_PORT")
-    DATABASE_DB : str = os.getenv("DATABASE_DB")
-    DATABASE_URL = f"postgresql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_SERVER}:{DATABASE_PORT}/{DATABASE_DB}"
+    DATABASE_URL : str =  os.getenv("DATABASE_URL")
+    HTTP_ACCESS_TOKEN_SECRET_KEY : str = os.getenv("HTTP_ACCESS_TOKEN_SECRET_KEY")
+    JWT_ACCESS_TOKEN_SECRET_KEY : str = os.getenv("JWT_ACCESS_TOKEN_SECRET_KEY")
+    ALGORITHM : str = os.getenv("JWT_ALGORITHM")
+    ACCESS_TOKEN_EXPIRE_MINUTES : str = os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
+    ACCOUNT_RECUPERATION_EXPIRE_MINUTES : str = os.getenv("ACCOUNT_RECUPERATION_EXPIRE_MINUTES")
+    MAIL_ADDRESS : str  = os.getenv("MAIL")
+    MAIL_PASSWORD : str = os.getenv("MAIL_PASSWORD")
+    ALGORITHM = os.getenv("JWT_ALGORITHM")
 
 settings = Settings()
